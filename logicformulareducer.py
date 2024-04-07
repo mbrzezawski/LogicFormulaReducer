@@ -138,71 +138,32 @@ def redukuj(s):
         s = s2
     return s
 
-# Funkcje sprawdzające czy wektory minimalne pasują do danego wzorca
-def detect_xor(wektory, zmienne):
-    if len(wektory) == 2 and len(zmienne) == 2:
-        if sorted(wektory) == ['01','10']:
-            return f"{zmienne[0]}^{zmienne[1]}"
-    return None
-
-def detect_imp(wektory,zmienne):
-    if len(wektory) == 2 and len(zmienne) == 2:
-        if sorted(wektory) == ['-1','0-']:
-            return f"{zmienne[0]}>{zmienne[1]}"
-    return None
-
-def detect_dys(wektory, zmienne):
-    if len(wektory) == 2 and len(zmienne) == 2:
-        if sorted(wektory) == ['-0', '0-']:
-            return f"{zmienne[0]}/{zmienne[1]}"
-    return None
-
-def detect_xor2(wektory, zmienne):
-    if len(wektory) == 4 and len(zmienne) == 3:
-        if sorted(wektory) == ['001', '010', '100', '111']:
-            return f"{zmienne[0]}^{zmienne[1]}^{zmienne[2]}"
-    return None
-
-def detect_imp2(wektory,zmienne):
-    if len(wektory) == 2 and len(zmienne) == 3:
-        if sorted(wektory) == ['--1','10-']:
-            return f"{zmienne[0]}>{zmienne[1]}>{zmienne[2]}"
-    return None
-
-def detect_dys2(wektory, zmienne):
-    if len(wektory) == 2 and len(zmienne) == 3:
-        if sorted(wektory) == ['--0', '11-']:
-            return f"{zmienne[0]}/{zmienne[1]}/{zmienne[2]}"
-    return None
-
 # Funkcja budująca wyrazenie z minimalnych wektorów
 def build_expression_from_vectors(wektory, zmienne):
     wyrażenia = []
+    wzorce = {
+        ('01', '10'): lambda zmienne: f"{zmienne[0]}^{zmienne[1]}",
+        ('-1', '0-'): lambda zmienne: f"{zmienne[0]}>{zmienne[1]}",
+        ('-0', '0-'): lambda zmienne: f"{zmienne[0]}/{zmienne[1]}",
+        ('001', '010', '100', '111'): lambda zmienne: f"{zmienne[0]}^{zmienne[1]}^{zmienne[2]}",
+        ('--1', '10-'): lambda zmienne: f"{zmienne[0]}>{zmienne[1]}>{zmienne[2]}",
+        ('--0', '11-'): lambda zmienne: f"{zmienne[0]}/{zmienne[1]}/{zmienne[2]}"
+    }
 
-    xor_expression = detect_xor(wektory, zmienne)
-    if xor_expression:
-        return xor_expression
+    def detect_pattern(wektory, zmienne):
+        posortowane_wektory = tuple(sorted(wektory))        
+        # Sprawdzenie, czy posortowane wektory pasują do któregokolwiek z wzorców
+        if posortowane_wektory in wzorce:
+            # Wykonanie funkcji przypisanej do wzorca
+            return wzorce[posortowane_wektory](zmienne)
+        
+        return None
     
-    imp_expression = detect_imp(wektory, zmienne)
-    if imp_expression:
-        return imp_expression
-    
-    dys_expression = detect_dys(wektory, zmienne)
-    if dys_expression:
-        return dys_expression
-    
-    xor_expression2 = detect_xor2(wektory, zmienne)
-    if xor_expression2:
-        return xor_expression2
-    
-    imp_expression2 = detect_imp2(wektory, zmienne)
-    if imp_expression2:
-        return imp_expression2
-    
-    dys_expression2 = detect_dys2(wektory, zmienne)
-    if dys_expression2:
-        return dys_expression2
-    
+    pattern = detect_pattern(wektory, zmienne)
+
+    if pattern:
+        return pattern
+
     for wektor in wektory:
         części_wyrażenia = []
 
