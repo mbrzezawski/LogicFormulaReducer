@@ -43,12 +43,12 @@ def is_valid_expression(expr):
 
     return not expecting_operand and parentheses_count == 0
 
-def ekstraktuj_zmienne(expr):
-    wzor = r"[a-z]"
-    zmienne = re.findall(wzor, expr)
-    unikalne_zmienne = sorted(set(zmienne))
+def extract_variables(expr):
+    pattern = r"[a-z]"
+    variables = re.findall(pattern, expr)
+    unique_variables = sorted(set(variables))
 
-    return unikalne_zmienne
+    return unique_variables
 
 def reduce_expression(expr):
     # Generowanie wektorów prawdy z wyrażenia
@@ -66,7 +66,7 @@ def reduce_expression(expr):
         return 'T'
     
     # Minimalizacja wektorów
-    minimal_vectors = minp(truth_vectors, redukuj(truth_vectors))
+    minimal_vectors = minp(truth_vectors, reduce(truth_vectors))
     
     # Zwróć 'F' jeśli nie ma minimalnych wektorów (brak spełniających wartości)
     if not minimal_vectors:
@@ -77,7 +77,7 @@ def reduce_expression(expr):
         return expr
     
     # Wyodrębnienie zmiennych z wyrażenia
-    zmienne = ekstraktuj_zmienne(expr)
+    zmienne = extract_variables(expr)
     # Budowanie zredukowanego wyrażenia z minimalnych wektorów
     reduced_expr = build_expression_from_vectors(minimal_vectors, zmienne)
 
@@ -109,7 +109,7 @@ def generate_truth_vectors(expr):
 
     return truth_vectors
 
-def lacz(s1,s2):
+def connect(s1,s2):
   lr = 0
   w = ""
   for i in range(len(s1)):
@@ -121,68 +121,68 @@ def lacz(s1,s2):
   if lr==1: return w
   return None
 
-def redukuj(s):
+def reduce(s):
     while True:
         s2 = set()
         changed = False
         for e1 in s:
             for e2 in s:
                 if e1 != e2:
-                    n = lacz(e1, e2)
+                    n = connect(e1, e2)
                     if n:
                         changed = True
                         s2.add(n)
-        s2.update(e1 for e1 in s if all(lacz(e1, e2) is None for e2 in s if e1 != e2))
+        s2.update(e1 for e1 in s if all(connect(e1, e2) is None for e2 in s if e1 != e2))
         if not changed:
             break
         s = s2
     return s
 
 # Funkcja budująca wyrazenie z minimalnych wektorów
-def build_expression_from_vectors(wektory, zmienne):
-    wyrażenia = []
-    wzorce = {
-        ('01', '10'): lambda zmienne: f"{zmienne[0]}^{zmienne[1]}",
-        ('-1', '0-'): lambda zmienne: f"{zmienne[0]}>{zmienne[1]}",
-        ('-0', '0-'): lambda zmienne: f"{zmienne[0]}/{zmienne[1]}",
-        ('001', '010', '100', '111'): lambda zmienne: f"{zmienne[0]}^{zmienne[1]}^{zmienne[2]}",
-        ('--1', '10-'): lambda zmienne: f"{zmienne[0]}>{zmienne[1]}>{zmienne[2]}",
-        ('--0', '11-'): lambda zmienne: f"{zmienne[0]}/{zmienne[1]}/{zmienne[2]}"
+def build_expression_from_vectors(vectors, variables):
+    expressions = []
+    patterns = {
+        ('01', '10'): lambda variables: f"{variables[0]}^{variables[1]}",
+        ('-1', '0-'): lambda variables: f"{variables[0]}>{variables[1]}",
+        ('-0', '0-'): lambda variables: f"{variables[0]}/{variables[1]}",
+        ('001', '010', '100', '111'): lambda variables: f"{variables[0]}^{variables[1]}^{variables[2]}",
+        ('--1', '10-'): lambda variables: f"{variables[0]}>{variables[1]}>{variables[2]}",
+        ('--0', '11-'): lambda variables: f"{variables[0]}/{variables[1]}/{variables[2]}"
     }
 
-    def detect_pattern(wektory, zmienne):
-        posortowane_wektory = tuple(sorted(wektory))        
-        # Sprawdzenie, czy posortowane wektory pasują do któregokolwiek z wzorców
-        if posortowane_wektory in wzorce:
-            # Wykonanie funkcji przypisanej do wzorca
-            return wzorce[posortowane_wektory](zmienne)
+    def detect_pattern(vectors, variables):
+        sorted_vectors = tuple(sorted(vectors))        
+        # Check if sorted vectors match any pattern
+        if sorted_vectors in patterns:
+            # Execute the function associated with the pattern
+            return patterns[sorted_vectors](variables)
         
         return None
     
-    pattern = detect_pattern(wektory, zmienne)
+    pattern = detect_pattern(vectors, variables)
 
     if pattern:
         return pattern
 
-    for wektor in wektory:
-        części_wyrażenia = []
+    for vector in vectors:
+        expression_parts = []
 
-        for i, wartość in enumerate(wektor):
-            if wartość == '1':
-                części_wyrażenia.append(f"{zmienne[i]}")
-            elif wartość == '0':
-                części_wyrażenia.append(f"~{zmienne[i]}")
+        for i, value in enumerate(vector):
+            if value == '1':
+                expression_parts.append(f"{variables[i]}")
+            elif value == '0':
+                expression_parts.append(f"~{variables[i]}")
 
-        if len(części_wyrażenia) > 1:
-            część_wyrażenia = f"({'&'.join(części_wyrażenia)})"
+        if len(expression_parts) > 1:
+            expression_part = f"({'&'.join(expression_parts)})"
         else:
-            część_wyrażenia = '&'.join(części_wyrażenia)
+            expression_part = '&'.join(expression_parts)
 
-        if część_wyrażenia: 
-            wyrażenia.append(część_wyrażenia)
+        if expression_part: 
+            expressions.append(expression_part)
 
-    wynikowe_wyrażenie = "|".join(wyrażenia)
-    return wynikowe_wyrażenie
+    final_expression = "|".join(expressions)
+    return final_expression
 
 def match(x,w):
   for i in range(len(x)):
